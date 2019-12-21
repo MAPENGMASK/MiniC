@@ -1,0 +1,6 @@
+int main(){
+	int r=2,h=3;
+    float s;
+	s=r*(h+r);
+        return 0;
+}

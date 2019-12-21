@@ -1,0 +1,7 @@
+void main(){
+      int a,b,c,s;
+        if(a>b+c){
+            a=1;
+        }else
+           a=0;
+}

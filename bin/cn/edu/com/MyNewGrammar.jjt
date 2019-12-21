@@ -1,0 +1,490 @@
+/**
+ * JJTree template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = false;}PARSER_BEGIN(MyNewGrammar)package cn.edu.com;
+
+import java.io.*;
+import java.util.ArrayList;
+import cn.edu.util.*;
+import java.util.Stack;
+
+public class MyNewGrammar{
+  static QTList qtList=new QTList();//四元式组
+  static VariableTable VTB= new VariableTable();//符号表
+ 
+  public static void main(String filename)
+  {
+    
+ 	FileInputStream file;
+ 	FileOutputStream result;
+
+    
+    try {
+		  file = new FileInputStream(filename);
+		  result = new FileOutputStream("src/tree.txt");
+		   MyNewGrammar parser = new MyNewGrammar(file);
+		   try {
+          		SimpleNode rootNode = parser.Start();
+   			 	rootNode.dump(" ",result);//抓取返回的语法树。
+      		} catch (Exception e) {
+        		System.out.println(e.getMessage());
+     		 } catch (Error e) {
+        		System.out.println(e.getMessage());
+     		 }
+
+     		 qtList.printQTTable();//打印四元式表
+     		 VTB.printVariableTable();//打印符号表
+     		 result.close();
+	} catch (FileNotFoundException e1) {
+		// TODO Auto-generated catch block
+		e1.printStackTrace();
+	} catch (IOException e) {
+			// TODO 自动生成的 catch 块
+			e.printStackTrace();
+		}
+
+
+	FileInputStream fileStream;
+	FileOutputStream Binary;
+	
+    try {
+		  fileStream = new FileInputStream(filename);
+		  Binary = new FileOutputStream("src/binary.txt");
+		  MyNewGrammar parser = new MyNewGrammar(fileStream);
+		  Token token;
+   		  while(true) {
+   			      token=parser.getNextToken();
+     			  if(token!=null&& token.kind!=0) {
+     			    		Binary.write((token.kind+"\t"+token.image+"\n").getBytes());//保存二元式
+     			 			}
+     			 	else {
+     			 	  break;}
+ 				 }
+ 				  Binary.close();
+	} catch (FileNotFoundException e1) {
+		// TODO Auto-generated catch block
+		e1.printStackTrace();
+	} catch (IOException e) {
+			// TODO 自动生成的 catch 块
+			e.printStackTrace();
+		}
+	}
+}PARSER_END(MyNewGrammar)SKIP :{  " "| "\t"| "\n"| "\r"| < "//" (~[ "\n", "\r" ])*    (      "\n"    | "\r"    | "\r\n"    ) >| < "/*" (~[ "*" ])* "*"    (      ~[ "/" ] (~[ "*" ])* "*"    )*    "/" >}TOKEN : /* LITERALS */{  < INTEGER_LITERAL :< DECIMAL_LITERAL > ([ "l", "L" ])?//整数定义  | < HEX_LITERAL > ([ "l", "L" ])?  | < OCTAL_LITERAL > ([ "l", "L" ])? >
+  |  < FLOAT_LITERAL :(< INTEGER_LITERAL >)+( "." (< INTEGER_LITERAL >)+)? >//浮点数定义| < #DECIMAL_LITERAL : [ "1"-"9" ] ([ "0"-"9" ])* >//十进制| < #HEX_LITERAL : "0" [ "x", "X" ] ([ "0"-"9", "a"-"f", "A"-"F" ])+ >//十六进制| < #OCTAL_LITERAL : "0" ([ "0"-"7" ])* >//八进制}
+TOKEN : /* 关键字*/
+{
+    < MAIN : "main">
+  | < RETURN:"return">
+  | < DEF:"default" >
+  
+  | < INT : "int">
+  | < DOUBLE :"double" >
+  | < FLOAT :"float" >
+  | < VOID : "void">
+  | < CHAR:"char" >
+  | < STRING :"String">
+  
+  | < IF:"if">
+  | < ELSE:"else" >
+  | < BREAK:"break" >
+  | < CONTINUE:"continue" >
+  
+  | < SWITCH:"switch" >
+  | < CASE:"case" >
+  
+  | < WHILE:"while" >
+  
+  | < FOR:"for" >
+  | < DO:"do" >
+}
+TOKEN : /* 算术运算符 */
+{
+  	< ADD:"+">
+  | < MIN:"-">
+  | < MUL:"*">
+  | < DIV:"/">
+  | < QUEUE:"%" >
+  | < ASSIGN:"=">
+
+  | < ADDONE:"++" >
+  | < MINUTEONE:"--" >
+}
+TOKEN : /* 逻辑运算符 */
+{
+	< LT:"<"  >
+  | < LE:"<=" >
+  | < GT:">"  >
+  | < GE:">=" >
+  | < EQ:"==" >
+  | < NE:"!=" >
+  
+  | < AND:"&&" >
+  | < OR:"||" >
+  | < NOT:"!" >
+}TOKEN : /* 标识符 */{  < IDENTIFIER :    < LETTER >    (      < LETTER >    | < DIGIT >     )* >	| < #LETTER : [ "_", "a"-"z", "A"-"Z" ] >
+	| < #DIGIT : [ "0"-"9" ] >
+}
+TOKEN:/*界符*/
+{
+  <LC:"(">
+  | <RC:")">
+  | <LM:"[">
+  | <RM:"]">
+  | <LB:"{">
+  | <RB:"}">
+  | < COMMA:"," >
+  | < SEMICOLON:";" >
+  | < COLON:":" >
+}
+SimpleNode Start() :{}{  program() < EOF>  {    return jjtThis;  }}void program() :{}//程序入口{ (< INT >|< VOID >)
+ < MAIN >< LC >< RC >< LB > (Statementblock())* <RB>}
+void Statementblock():{}//语句块
+{
+	Statement()|< LB >(Statementblock())*< RB > 
+}
+void Statement(): { }//语句
+{
+	  (
+	    SequenceStatement()				//顺序语句
+		| Conditionalstatements()					//条件语句
+		| loopstatement()						//循环语句
+		| SwitchStatement()      				//switch-case
+		| Return()
+	  )							
+}
+void SequenceStatement(): { }//顺序语句
+{
+	[statement()|assignment()] < SEMICOLON >			//声明或赋值
+}
+void statement() : //声明语句 type identifier = LITERALS,...
+{ Token first = null;
+Token middle=null;
+String type; }
+{
+ type = type()
+ 	first=< IDENTIFIER>
+ 	{VTB.addVariable(new Variable(type,first.image,first.endLine,first.endColumn)); }
+ 	( 	  <ASSIGN> (middle=<INTEGER_LITERAL>|middle=< FLOAT_LITERAL >)
+ 	{ 
+	qtList.addQTInfo(new QTInfo("=",middle.image,"_",first.image));
+  	 })?
+ (
+    <COMMA>
+    first=< IDENTIFIER >
+    {VTB.addVariable(new Variable(type,first.image,first.endLine,first.endColumn)); }
+    (
+    <ASSIGN> (middle=<INTEGER_LITERAL>|middle=< FLOAT_LITERAL >)
+    { 
+	qtList.addQTInfo(new QTInfo("=",middle.image,"_",first.image));
+   	}
+  	)?
+  )*
+}
+void assignment()://赋值语句
+ {Token first = null;
+ String middle = null;
+ }
+{
+	first=< IDENTIFIER>
+	(<ADDONE >|<MINUTEONE >)?
+
+	< ASSIGN>middle=Expression()
+	{
+		qtList.addQTInfo(new QTInfo("=",middle,"_",first.image));
+		VTB.assignmentJudge(first.image);
+	}
+	(
+    <COMMA>
+    first=< IDENTIFIER > <ASSIGN> middle=Expression()
+   { 
+	qtList.addQTInfo(new QTInfo("=",middle,"_",first.image));
+	VTB.assignmentJudge(first.image);
+   }
+   )*
+}
+void Conditionalstatements()://条件语句
+{ConditionValue value;
+QTInfo qt = null;}
+{
+  <IF> <LC> value=Logiccondition()
+  { value.backpatchTrueChain(QTInfo.size+1);}
+  <RC> Statementblock()
+  (
+    LOOKAHEAD(1)
+    <ELSE>
+    {qt=new QTInfo("J","_","_","T");
+	qtList.addQTInfo(qt);
+	value.backpatchFalseChain(QTInfo.size+1);
+     }
+    Statementblock()
+ 	)?
+ 	{if(qt==null)
+ 		value.backpatchFalseChain(QTInfo.size+1);
+ 	 else
+ 	 	qt.setResult(QTInfo.size+1);
+ 	}
+}
+ConditionValue Logiccondition() ://逻辑
+{ConditionValue value1,value2;
+String op=null;
+}
+{
+  value1=Condition()
+  (
+    op=Logic()
+ 	 { if(op=="&&") {value1.backpatchTrueChain(QTInfo.size+1); }
+   		 else if(op=="||") { value1.backpatchFalseChain(QTInfo.size+1);}
+    }
+   value2=Logiccondition()
+    { if(op=="&&") {value2.mergeFalse(value1); }
+    	else if(op=="||") { value2.mergeTrue(value1);}
+		return value2;
+    	}
+	)?
+	{
+	  return value1;
+	}
+}
+ConditionValue Condition() :// > >= <= == != 
+{String first=null,middle=null,op=null;
+ConditionValue value=new ConditionValue();
+}
+{
+  first=Expression()
+ (op=Relationship() middle=Expression())?
+  {
+    if (op != null)
+    {
+      QTInfo qt = new QTInfo("J" + op, first, middle, "T");
+      qtList.addQTInfo(qt);
+      value.mergeTrue(qt);
+    }
+    else
+    {
+      QTInfo qt = new QTInfo("Jnz", first, "_", "T");
+      qtList.addQTInfo(qt);
+      value.mergeTrue(qt);
+    }
+    QTInfo qt = new QTInfo("J", "_", "_", "F");
+    qtList.addQTInfo(qt);
+    value.mergeFalse(qt);
+    return value;
+  }
+}
+void loopstatement()://循环语句
+{ConditionValue value;
+ int quad;
+ int quad1;
+  }
+{
+  (
+   <WHILE> <LC> {quad=QTInfo.size+1; }
+   value=Logiccondition()
+   { value.backpatchTrueChain(QTInfo.size+1);}
+   <RC> Statementblock()
+   { qtList.addQTInfo(new QTInfo("J","_","_",quad));
+	 value.backpatchFalseChain(QTInfo.size+1);
+   }
+  )|(
+   <DO> {quad=QTInfo.size+1; }
+   Statementblock()
+   <WHILE> <LC> value=Logiccondition()
+   {
+	 value.backpatchTrueChain(quad);
+     value.backpatchFalseChain(QTInfo.size+1);
+   }
+     <RC> <SEMICOLON>
+    )|(
+   <FOR> <LC> statement() { quad=QTInfo.size+1;}
+   <SEMICOLON> value=Logiccondition() { quad1=QTInfo.size+1; }
+    <SEMICOLON>crease()
+    {
+    qtList.addQTInfo(new QTInfo("J", "_", "_", quad));
+    value.backpatchTrueChain(QTInfo.size + 1);
+    }
+  <RC>
+   Statementblock()
+   {
+    qtList.addQTInfo(new QTInfo("J", "_", "_", quad1));
+    value.backpatchFalseChain(QTInfo.size + 1);
+   }
+    )
+}
+void SwitchStatement()://switch语句
+{ String first;
+  Token op = null, temp = null,jump = null;
+  int defaultQuad = 0;
+  QTInfo testInfo;
+  ArrayList < String > arrayCase = new ArrayList < String > ();
+  ArrayList < Integer > arrayQuad = new ArrayList < Integer > ();
+  ArrayList < QTInfo > arrayInfo = new ArrayList < QTInfo > ();}
+{
+  <SWITCH><LC> first=Expression()<RC> <LB >
+  {
+    testInfo=new QTInfo("J", "_", "_", "NULL");
+    qtList.addQTInfo(testInfo);
+  }
+  (
+    <CASE> op=<INTEGER_LITERAL> <COLON>
+    {
+      jump = null;
+      arrayCase.add(op.image); 
+      arrayQuad.add(QTInfo.size + 1); 
+    }
+  	Statementblock()
+  	(
+  	  jump=<BREAK> <SEMICOLON>
+  	  {
+        QTInfo breakInfo = new QTInfo("J", "_", "_", "NULL");
+        qtList.addQTInfo(breakInfo);
+        arrayInfo.add(breakInfo);
+      }
+  	)?
+  )+
+  (
+    temp=<DEF> <COLON>
+     {
+      jump = null;
+      defaultQuad = QTInfo.size + 1;
+    }
+    Statementblock()
+    (
+  	  jump=<BREAK> <SEMICOLON>
+  	   {
+        QTInfo breakInfo = new QTInfo("J", "_", "_", "NULL");
+        qtList.addQTInfo(breakInfo);
+        arrayInfo.add(breakInfo);
+      }
+  	)?
+  )?
+  {
+    if (jump == null)
+    {
+      QTInfo breakInfo = new QTInfo("J", "_", "_", "NULL");
+      qtList.addQTInfo(breakInfo);
+      arrayInfo.add(breakInfo);
+    }
+    testInfo.setResult(QTInfo.size + 1);
+    for (int i = 0; i < arrayCase.size(); i++)
+    {
+      String caseImage = arrayCase.get(i);
+      int caseSeq = arrayQuad.get(i);
+      qtList.addQTInfo(new QTInfo("J==", first, caseImage, caseSeq));
+    }
+    if (temp != null) //
+    {
+      qtList.addQTInfo(new QTInfo("J", "_", "_", defaultQuad));
+    }
+    for (int i = 0; i < arrayInfo.size(); i++)
+    {
+      arrayInfo.get(i).setResult(QTInfo.size + 1);
+    }
+  }
+  <RB>
+}
+String Expression() ://表达式
+{String first;}
+{
+  first=AdditiveExpression()
+  {return first;}
+}
+String AdditiveExpression() ://加法式
+{String first,middle=null,Temp;
+	Token op=null;}
+{
+  first=MultiplicativeExpression(){Temp=first;}
+  (
+    (
+      op=< ADD>
+    | op=< MIN>
+    )
+    middle=MultiplicativeExpression()
+    {Temp=VariableNameGenerator.genVariableName();
+	qtList.addQTInfo(new QTInfo(op.image,first,middle,Temp));
+	first =Temp;
+    }
+  )*
+  {
+    return Temp;
+   }
+}
+String MultiplicativeExpression() ://乘法式
+{String first,middle=null,Temp;
+Token op=null;}
+{
+  first=UnaryExpression(){Temp=first; }
+  (
+    (
+      op=< MUL>
+    | op=< DIV>
+    | op=< QUEUE>
+    )
+    middle=UnaryExpression()
+    {Temp=VariableNameGenerator.genVariableName();
+    qtList.addQTInfo(new QTInfo(op.image,first,middle,Temp));
+    first = Temp;}
+  )*
+  {
+    return Temp;
+  }
+}
+String UnaryExpression() ://一元式
+{String first;
+Token node =null;}
+{
+  < LC> first=Expression() < RC> {	return first;}
+| node=< INTEGER_LITERAL >{	return node.image;}
+| node=< FLOAT_LITERAL >{	return node.image; }
+| node=< IDENTIFIER> { return node.image;}
+}
+String type()://基本数据类型
+{Token first =null;}
+{
+ (      first=< INT >
+  | first=< STRING >
+  | first=< DOUBLE  >
+  | first=< FLOAT  >
+  | first=< CHAR >
+)
+  {
+	  return first.image;
+	}
+}
+String Relationship() : //关系运算符
+{Token first=null;}
+{
+ (
+   first=<GT>
+| first=<LT>
+| first=<GE>
+| first=<LE>
+| first=<NE>
+| first=<EQ>
+  ) 
+	{
+	  return first.image;
+	}
+}
+String Logic()://&& ||
+{ Token m=null;}
+{
+  m=<AND>|m=<OR>
+  {
+    return m.image;
+  }
+}
+void Return(): { }//返回语句
+{
+  < RETURN > (< INTEGER_LITERAL >|< FLOAT_LITERAL >)? < SEMICOLON >
+  {
+    qtList.addQTInfo(new QTInfo("J","_","_","0"));
+  }
+}
+void crease()://自增自减
+{Token first = null;
+Token middle=null;}
+{
+first=< IDENTIFIER>(middle=<ADDONE >|middle=<MINUTEONE >)?
+{
+  //qtList.addQTInfo(new QTInfo(middle.image,first.image,1,first.image));
+}
+ }

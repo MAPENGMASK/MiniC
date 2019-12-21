@@ -1,0 +1,13 @@
+int main(){
+	int a=3,m,n,s,b,c;
+	if(a || m==n )
+	{a=33;}
+	if(a>b+c){
+            a=1;
+        }else
+           a=0;
+           
+           s=r*(h+r);
+        return 0;
+	
+}

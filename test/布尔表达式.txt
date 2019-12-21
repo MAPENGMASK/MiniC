@@ -1,0 +1,5 @@
+int main(){
+	int a=3,m,n;
+	if(a || m==n )
+	{a=33;}
+}
