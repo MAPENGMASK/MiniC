@@ -1,5 +1,5 @@
 # MiniC
-基于javacc的MiniC编译器
+基于javacc的MiniC语法分析器
 
 MyNewGrammar.html----BNF
 
