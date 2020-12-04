@@ -1,4 +1,4 @@
-# MiniC
+# MiniC（eclipse）
 基于javacc的MiniC语法分析器
 
 ## javaCC
@@ -18,12 +18,14 @@ JavaCC全称为Java Compiler Compiler，它是一个生成器，用于生成词�
 - 结果以文件方式输出；
 
 
-MyNewGrammar.html----BNF
+## 目录介绍
 
-MiniC----答辩ppt
+MyNewGrammar.html----BNF
 
 AmaterasUML----绘图插件
 
 sf-eclipse.javacc----JAVACC插件
 
-运行：cn.edu.ui.View.java
+## 运行
+
+cn.edu.ui.View.java
