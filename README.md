@@ -18,7 +18,9 @@ JavaCC全称为Java Compiler Compiler，它是一个生成器，用于生成词�
 - 结果以文件方式输出；
 
 
-## 目录介绍
+## 目录(文件)介绍
+
+cn.edu.com.MyNewGrammar.jjt------词法和语法描述文件
 
 MyNewGrammar.html----BNF
 
