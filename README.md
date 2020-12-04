@@ -18,9 +18,31 @@ JavaCC全称为Java Compiler Compiler，它是一个生成器，用于生成词�
 - 结果以文件方式输出；
 
 
-## 目录(文件)介绍
+## 核心文件介绍
 
-cn.edu.com.MyNewGrammar.jjt------词法和语法描述文件
+- cn.edu.com.
+
+MyNewGrammar.jjt------词法和语法描述文件
+
+TokenMgrError 是一个简单的定义错误的类，它是Throwable类的子类，用于定义在词法分析阶段检测到的错误。
+
+ParseException是另一个定义错误的类。它是Exception 和Throwable的子类，用于定义在语法分析阶段检测到的错误。
+
+Token类是一个用于表示token的类。我们在.jj文件中定义的每一个token（PLUS, NUMBER, or EOF），在Token类中都有对应的一个整数属性来表示，此外每一个token都有名为image的string类型的属性，用来表示token所代表的从输入中获取到的真实值。
+
+SimpleCharStream是一个转接器类，用于把字符传递给语法分析器。
+
+MyNewGrammarConstants是一个接口，里面定义了一些词法分析器和语法分析器中都会用到的常量。
+
+MyNewGrammarTokenManager 是词法分析器。
+
+MyNewGrammar 是语法分析器。
+
+## 顶级文件（目录）介绍
+
+src---源码
+
+test---测试用例
 
 MyNewGrammar.html----BNF
 
